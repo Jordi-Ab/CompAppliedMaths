@@ -21,7 +21,7 @@ public:
     void solveTridiagonal(const Vector& diag, const Vector& offd, Vector& x);
     Vector tridiagTimesVec(const Vector& ld,const Vector& d,
                            const Vector& ud,const Vector& v);
-    std::ofstream openOutputFile(std::string file_name);
+    void openOutputFile(std::string file_name, std::ofstream& output_file);
     void saveData(const double h, double norm, std::ofstream& output_file);
     void saveSolution(const double t, const double l_BC,
                       const Vector& us, const double r_BC,

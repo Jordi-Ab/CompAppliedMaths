@@ -109,9 +109,8 @@ Vector Helpers::tridiagTimesVec(const Vector& ld,
     return result;
 }
 
-std::ofstream Helpers::openOutputFile(std::string file_name){
+void Helpers::openOutputFile(std::string file_name, std::ofstream& output_file){
 
-    std::ofstream output_file;
     output_file.setf(std::ios::scientific,std::ios::floatfield);
     output_file.precision(7);
 
@@ -120,7 +119,6 @@ std::ofstream Helpers::openOutputFile(std::string file_name){
     if(!output_file.is_open()){
         throw std::runtime_error("Error when opening the file to write the solution.");
     }
-    return output_file;
 }
 
 void Helpers::saveSolution(const double t, const double l_BC,

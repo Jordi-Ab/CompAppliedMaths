@@ -4,7 +4,7 @@ import matplotlib.pyplot as pt
 mesh = np.loadtxt("OutputData/x_mesh.dat") # Holds the data of the mesh grid.
 arrayh = np.loadtxt("OutputData/output.dat") # Holds the data of the computed solution
 array = np.loadtxt("OutputData/true.dat"); # Holds the data of the true solution
-#h, err = np.loadtxt("OutputData/errors.dat", unpack=True)
+h, err = np.loadtxt("OutputData/errors.dat", unpack=True)
 
 ts = arrayh[:, 0] # time steps are in first column of output.dat file
 us_h = arrayh[:,1:] # computed solutions are on columns: from 1 onwards, of file output.dat
@@ -33,12 +33,11 @@ for time in ts_toplot:
     ax.set_ylabel('u(x,'+str(time)+') state')
     fig.savefig("Plot_time_"+str(time)+".png")
 
-#ax2 = fig.add_subplot(2,1,2)
-#ax2.loglog(h,err,'b-', lw=2)
-#ax2.set_xlabel('Step Size')
-#ax2.set_xlim(0, 1)
-#ax2.set_ylabel('Error')
-#ax2.set_title("Errors v.s. Step Size")
-
+fig2 = pt.figure()
+ax2 = fig2.add_subplot(1,1,1)
+ax2.loglog(h,err,'b-', lw=2)
+ax2.set_xlabel('Step Size')
+ax2.set_ylabel('Error')
+ax2.set_title(r"Convergence of Implicit Method taking $\Delta t = 4h^2$"+"\nError values v.s. Step Size")
 
 pt.show()

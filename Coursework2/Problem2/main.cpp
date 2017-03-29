@@ -20,7 +20,8 @@
 #include "Vector.hpp"
 #include "Matrix.hpp"
 
-static const std::string COMPLETE_PATH= "/Users/user/Documents/Maestria/Computational Applied Maths/Coursework2/Problem2/OutputData/";
+//static const std::string COMPLETE_PATH= "/Users/user/Documents/Maestria/Computational Applied Maths/Coursework2/Problem2/OutputData/";
+static const std::string COMPLETE_PATH= "OutputData/";
 Helpers hlp; // Useful functions
 
 Vector evaluateF(double (*f) (double x, double t),
@@ -38,7 +39,7 @@ double computeError(int t0, int T, double a,
                     double (*u0_f) (double x, double t),
                     double (*rhs_f) (double x, double t),
                     double (*true_sol_f) (double x, double t),
-                    const Vector& xmesh,const Vector& tmesh);
+                    double h);
 
 double true_sol_f(double x, double t){
     return exp(-4*t)*sin(2*M_PI*x) + x;
@@ -77,23 +78,15 @@ int main(){
 
     solve(t0, T, a, g0, g1, _u0_f, _rhs_f, _true_sol_f, xmesh, tmesh);
 
-    double C = 1; // constant that couples dt and h.
+    // CONVERGENCE ANALYSIS
     double h = 0.5;
     // Code Verification
-    std::ofstream this_file = hlp.openOutputFile(COMPLETE_PATH+"errors.dat");
-    while(h > 1e-3){
-        std::cout << "For h= " << h;
+    std::ofstream this_file;
+    hlp.openOutputFile(COMPLETE_PATH+"errors.dat", this_file);
+    while(h > 1e-2){
         h *= 0.5;
-        double dt = C*(h*h);
-        int this_Nx = 1/h;
-        int this_Nt = 1/dt;
-        std::cout << ", dt= " << dt;
-        Vector this_xmesh = hlp.linspace(0,1,this_Nx+1);
-        Vector this_tmesh = hlp.linspace(0,1,this_Nt+1);
-        double error = computeError(t0, T, a, g0, g1,
-                                    _u0_f, _rhs_f, _true_sol_f,
-                                    this_xmesh, this_tmesh);
-        std::cout << ", error= " << error;
+        double error = computeError(t0, T, a, g0, g1,_u0_f, _rhs_f, _true_sol_f,h);
+        std::cout << ", error= " << error << std::endl;
         hlp.saveData(h, error, this_file);
     }
     hlp.closeOutputFile(this_file);
@@ -139,8 +132,10 @@ void solve(int t0, int T, double a,
     diag = eye + diag*cfl;
     offd = offd*cfl;
 
-    std::ofstream output_file = hlp.openOutputFile(solution_filename);
-    std::ofstream true_sol_output = hlp.openOutputFile(true_sol_filename);
+    std::ofstream output_file;
+    std::ofstream true_sol_output;
+    hlp.openOutputFile(solution_filename, output_file);
+    hlp.openOutputFile(true_sol_filename, true_sol_output);
 
     // Advance it forward in time:
     Vector uh = evaluateF(u0_f, interior_xmesh, 0); // Initial Condition
@@ -174,12 +169,13 @@ double computeError(int t0, int T, double a,
                     double (*u0_f) (double x, double t),
                     double (*rhs_f) (double x, double t),
                     double (*true_sol_f) (double x, double t),
-                    const Vector& xmesh,const Vector& tmesh){
+                    double h){
 
-    int Nx = xmesh.GetSize()-1;
+    double dt = 4*(h*h);
+    int Nx = 1/h;
+    std::cout << "For h= " << h;
+    std::cout << ", and dt= " << dt << ": ";
 
-    double h = xmesh.Read(1) - xmesh.Read(0);
-    double dt = tmesh.Read(1) - tmesh.Read(0);
     Vector interior_xmesh = hlp.linspace(h,1-h, Nx-1); // mesh of interior points.
 
     double cfl = a * ( dt/pow(h,2.0) ); // Courant-Friedrichs-Loewy coefficient.
@@ -205,7 +201,7 @@ double computeError(int t0, int T, double a,
         Vector rhs = evaluateF(rhs_f, interior_xmesh, t+dt); /*
         Evaluate right hand side function at the interior mesh, and next time.*/
         rhs[0] = rhs[0] + ( a/(h*h) )*l_BC; // Include Left BC at first entry
-        rhs[Nx - 2] = rhs[Nx - 2] + ( a/(h*h) )*r_BC; // Include Right BC at last entry
+        rhs[Nx-2] = rhs[Nx-2] + ( a/(h*h) )*r_BC; // Include Right BC at last entry
 
         uh = uh + rhs*dt; // Complete right hand side.
 
@@ -215,7 +211,7 @@ double computeError(int t0, int T, double a,
     }
 
     // Compute the error at the final time T.
-    Vector true_s = evaluateF(true_sol_f, xmesh, T);
+    Vector true_s = evaluateF(true_sol_f, interior_xmesh, T);
     Vector difference = uh-true_s;
     double norm = difference.InfinityNorm();
     return norm;
