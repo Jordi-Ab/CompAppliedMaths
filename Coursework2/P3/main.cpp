@@ -33,8 +33,13 @@ void convergenceAnalysis(EuropeanPut& an_option);
 
 int main(){
 
+<<<<<<< HEAD
     case1();
     //case2();
+=======
+    //case1();
+    case2();
+>>>>>>> a9b33fc6e52c204758a1446cc01c75eacef1ced5
 
     return 0;
 }
