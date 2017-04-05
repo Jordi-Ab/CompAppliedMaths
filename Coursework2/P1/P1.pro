@@ -8,3 +8,5 @@ SOURCES += \
     Helpers.cpp \
     Vector.cpp \
     Matrix.cpp
+
+CONFIG += c++11

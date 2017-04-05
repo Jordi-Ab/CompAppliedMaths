@@ -12,3 +12,5 @@ SOURCES += \
     Vector.cpp \
     EuropeanPut.cpp \
     AbstractBlackScholes.cpp
+
+CONFIG += c++11

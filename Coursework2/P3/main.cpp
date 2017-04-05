@@ -22,7 +22,8 @@
 #include "Matrix.hpp"
 #include "EuropeanPut.hpp"
 
-static const std::string COMPLETE_PATH= "/Users/user/Documents/Maestria/Computational Applied Maths/CompAppliedMaths_git/Coursework2/P3/OutputData/";
+//static const std::string COMPLETE_PATH= "/Users/user/Documents/Maestria/Computational Applied Maths/CompAppliedMaths_git/Coursework2/P3/OutputData/";
+static const std::string COMPLETE_PATH= "OutputData/";
 Helpers hlp;
 
 
@@ -33,7 +34,7 @@ void convergenceAnalysis(EuropeanPut& an_option);
 int main(){
 
     case1();
-    case2();
+    //case2();
 
     return 0;
 }

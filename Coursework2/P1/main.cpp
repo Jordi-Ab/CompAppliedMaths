@@ -14,7 +14,8 @@
 #include "Helpers.hpp"
 
 // Complete path of the folder where you want the solution to be saved.
-static const std::string COMPLETE_PATH= "/Users/user/Documents/Maestria/Computational Applied Maths/CompAppliedMaths_git/Coursework2/P1/OutputData/";
+//static const std::string COMPLETE_PATH= "/Users/user/Documents/Maestria/Computational Applied Maths/CompAppliedMaths_git/Coursework2/P1/OutputData/";
+static const std::string COMPLETE_PATH = "OutputData/";
 Helpers hlp; // A set of useful functions.
 
 /*
@@ -127,6 +128,7 @@ void case1(){
     int n_points=9;
     double alpha = 0;   // Left Boundary Condition.
     double beta = 1;    // Right Boundary Condition.
+
     // A unifromly spaced mesh between 0 and 1 of n_points+1 points.
     Vector mesh = hlp.linspace(0,1,n_points+1);
 

@@ -20,8 +20,8 @@
 #include "Vector.hpp"
 #include "Matrix.hpp"
 
-static const std::string COMPLETE_PATH= "/Users/user/Documents/Maestria/Computational Applied Maths/CompAppliedMaths_git/Coursework2/P2/OutputData/";
-//static const std::string COMPLETE_PATH= "OutputData/";
+//static const std::string COMPLETE_PATH= "/Users/user/Documents/Maestria/Computational Applied Maths/CompAppliedMaths_git/Coursework2/P2/OutputData/";
+static const std::string COMPLETE_PATH= "OutputData/";
 Helpers hlp; // Useful functions
 
 /*
@@ -49,8 +49,8 @@ Vector evaluateF(double (*f) (double x, double t),
  * Function: solve
  * -------------------------
  * Solves a heat equation PDE as the one
- * described at the comments on top
- * using an implicit method, saves the
+ * described at the comments on top,
+ * using an implicit method. Saves the
  * solution at each time step on an output file
  *
  * Receives:
@@ -159,9 +159,6 @@ int main(){
         hlp.saveData(h, error, this_file);
     }
     hlp.closeOutputFile(this_file);
-
-
-
     return 0;
 }
 
