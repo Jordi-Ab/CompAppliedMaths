@@ -32,7 +32,7 @@ void convergenceAnalysis(EuropeanPut& an_option);
 
 int main(){
 
-    case1();
+    //case1();
     case2();
 
     return 0;
