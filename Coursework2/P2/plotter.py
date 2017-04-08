@@ -31,13 +31,16 @@ for time in ts_toplot:
     ax.legend(loc='upper left')
     ax.set_xlabel('x space')
     ax.set_ylabel('u(x,'+str(time)+') state')
-    fig.savefig("Plot_time_"+str(time)+".png")
+    fig.savefig("P2_time_"+str(time)+".png")
 
 fig2 = pt.figure()
 ax2 = fig2.add_subplot(1,1,1)
-ax2.loglog(h,err,'b-', lw=2)
+ax2.loglog(h,err,'b-', lw=2, label = r'$errors$')
+ax2.loglog(h, (h*h), 'ko', lw=2, label = r'$O(h^2)$')
+ax2.legend(loc='upper left')
 ax2.set_xlabel('Step Size')
 ax2.set_ylabel('Error')
 ax2.set_title(r"Convergence of Implicit Method taking $\Delta t = 4h^2$"+"\nError values v.s. Step Size")
+fig2.savefig("P2_errors.png")
 
 pt.show()

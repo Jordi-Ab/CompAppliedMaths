@@ -13,13 +13,14 @@ EuropeanPut::EuropeanPut(int Nx, int Nt, double r,
     _K = K;
     _R = R;
 
-    // Initialize grids.
+    // Initialize grids on Black Scholes.
     setSpaceGrid();
     setTimeGrid();
 
 }
 
-void EuropeanPut::solveExplicit(std::string output_file_name){
+void EuropeanPut::solveExplicit(std::string output_file_name,
+                                bool compute_error){
     std::ofstream out_file;
     hlp.openOutputFile(output_file_name, out_file);
 
@@ -27,7 +28,7 @@ void EuropeanPut::solveExplicit(std::string output_file_name){
     double alpha = pow(_sigma, 2)*_dt;
     double beta = _r*_dt;
 
-    semiImplicitDiscretize(alpha, beta);
+    explicitDiscretize(alpha, beta);
     for(double t=0; t<=_T; t+=_dt){
         double l_BC = f0(t+_dt);
         double r_BC = fR(t+_dt);
@@ -38,7 +39,8 @@ void EuropeanPut::solveExplicit(std::string output_file_name){
     hlp.closeOutputFile(out_file);
 }
 
-void EuropeanPut::solveFullyImplicit(std::string output_file_name){
+void EuropeanPut::solveFullyImplicit(std::string output_file_name,
+                                     bool compute_error){
     std::ofstream out_file;
     hlp.openOutputFile(output_file_name, out_file);
 
@@ -46,7 +48,7 @@ void EuropeanPut::solveFullyImplicit(std::string output_file_name){
     double alpha = pow(_sigma, 2)*_dt;
     double beta = _r*_dt;
 
-    semiImplicitDiscretize(alpha, beta);
+    fullyImplicitDiscretize(alpha, beta);
     for(double t=0; t<=_T; t+=_dt){
         double l_BC = f0(t+_dt);
         double r_BC = fR(t+_dt);
@@ -65,7 +67,6 @@ void EuropeanPut::solveSemiImplicit(std::string output_file_name,
 
     if (save)
         hlp.openOutputFile(output_file_name, out_file);
-
 
     // Constants for discretizing.
     double alpha = pow(_sigma, 2)*_dt;
@@ -111,7 +112,7 @@ void EuropeanPut::solveSemiImplicit(std::string output_file_name,
     if(save) hlp.closeOutputFile(out_file);
 }
 
-void EuropeanPut::computeError(Vector uh_finalt){
+void EuropeanPut::computeError(Vector uh_finalT){
 
     // Compute the true solution
     // at the final time T.
@@ -121,7 +122,7 @@ void EuropeanPut::computeError(Vector uh_finalt){
         true_s[i] = true_sol(_T, x);
     }
 
-    Vector difference = uh_finalt-true_s;
+    Vector difference = uh_finalT-true_s;
     double norm = difference.InfinityNorm();
     _error_value = norm;
 }
@@ -181,19 +182,14 @@ double EuropeanPut::g(double x){
 double EuropeanPut::true_sol(double t, double x){
     if(t==0) return g(x);
     return _K*exp(-_r*t)*stdCumNormal(-d1(t,x)) - x*stdCumNormal(-d2(t,x));
-    //return _K*exp(-_r*(_T-t))*stdCumNormal(-d2(t,x)) - x*stdCumNormal(-d1(t,x));
 }
 
 double EuropeanPut::d1(double t, double x){
     return ( log(x/_K) + (_r-0.5*(_sigma*_sigma))*t ) / (_sigma*sqrt(t));
-    //return (1/(_sigma*pow(t, 0.5)))*((log(x/_K))+t*(_r-(pow(_sigma, 2))/2.0));
-    //return ( log(x/_K) + (_r + 0.5*pow(_sigma, 2))*(_T-t) ) / ( _sigma*sqrt(_T-t) );
 }
 
 double EuropeanPut::d2(double t, double x){
     return ( log(x/_K) + (_r+0.5*(_sigma*_sigma))*t ) / (_sigma*sqrt(t));
-    //return (1/(_sigma*pow(t, 0.5)))*((log(x/_K))+t*(_r+(pow(_sigma, 2))/2.0));
-    //return ( log(x/_K) + (_r - 0.5*pow(_sigma, 2))*(_T-t) ) / ( _sigma*sqrt(_T-t) );
 }
 
 double EuropeanPut::stdCumNormal(double d){

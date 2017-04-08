@@ -6,7 +6,7 @@ case = 2
 mesh = np.loadtxt("OutputData/grid_case"+str(case)+".dat") # Holds the data of the mesh grid.
 arrayh = np.loadtxt("OutputData/computed_case"+str(case)+".dat") # Holds the data of the computed solution
 array = np.loadtxt("OutputData/true_case"+str(case)+".dat"); # Holds the data of the true solution
-#h, err = np.loadtxt("OutputData/errors.dat", unpack=True)
+h, err = np.loadtxt("OutputData/errors_case"+str(case)+".dat", unpack=True)
 
 ts = arrayh[:, 0] # time steps are in first column of output.dat file
 us_h = arrayh[:,1:] # computed solutions are on columns: from 1 onwards, of file output.dat
@@ -35,11 +35,14 @@ for time in ts_toplot:
     ax.set_ylabel('Value of European Put Option \n v(x,'+str(time)+') ')
     fig.savefig("BS_Case"+str(case)+"_time_"+str(time)+".png")
 
-#fig2 = pt.figure()
-#ax2 = fig2.add_subplot(1,1,1)
-#ax2.loglog(h,err,'b-', lw=2)
-#ax2.set_xlabel('Step Size')
-#ax2.set_ylabel('Error')
-#ax2.set_title(r"Convergence of Implicit Method taking $\Delta t = 4h^2$"+"\nError values v.s. Step Size")
+fig2 = pt.figure()
+ax2 = fig2.add_subplot(1,1,1)
+ax2.loglog(h,err,'b-', lw=2, label = r'$errors$')
+ax2.loglog(h, (h**2), 'ko', lw=2, label = r'$O(h^2)$')
+ax2.legend(loc='upper left')
+ax2.set_xlabel('Step Size')
+ax2.set_ylabel('Infinity Norm Error')
+ax2.set_title(r"Convergence of Semi Implicit Method taking $\Delta t = 4h^2$"+"\nError values v.s. Step Size")
+fig2.savefig("BS_errors_case"+str(case)+".png")
 
 pt.show()

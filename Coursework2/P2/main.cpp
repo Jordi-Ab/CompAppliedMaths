@@ -20,8 +20,8 @@
 #include "Vector.hpp"
 #include "Matrix.hpp"
 
-//static const std::string COMPLETE_PATH= "/Users/user/Documents/Maestria/Computational Applied Maths/CompAppliedMaths_git/Coursework2/P2/OutputData/";
-static const std::string COMPLETE_PATH= "OutputData/";
+static const std::string COMPLETE_PATH= "/Users/user/Documents/Maestria/Computational Applied Maths/CompAppliedMaths_git/Coursework2/P2/OutputData/";
+//static const std::string COMPLETE_PATH= "OutputData/";
 Helpers hlp; // Useful functions
 
 /*
@@ -188,11 +188,12 @@ void solve(int t0, int T, double a,
     // (Its the sparse representation of K).
     Vector diag(Nx-1);
     Vector offd(Nx-2);
-    diag.fillWith(2);
-    offd.fillWith(-1);
+    diag.fillWith(2); // Set all values of vector as 2.
+    offd.fillWith(-1); // Set all values of vector as -1.
 
-    Vector eye(Nx-1); // Sparse identity matrix.
-    eye.fillWith(1);
+    // Sparse identity matrix.
+    Vector eye(Nx-1);
+    eye.fillWith(1); // Set all values of vector as 1.
 
     // Discretize ( I + cfl*K ):
     diag = eye + diag*cfl;

@@ -23,76 +23,102 @@
 #include "EuropeanPut.hpp"
 
 static const std::string COMPLETE_PATH= "/Users/user/Documents/Maestria/Computational Applied Maths/CompAppliedMaths_git/Coursework2/P3/OutputData/";
-Helpers hlp;
+Helpers hlp; // Set of useful functions
 
-
+// Implementation of First Case.
+// Problem 3 part c
 void case1();
+
+// Implementation of Second Case
+// Problem 3 part d
 void case2();
-void convergenceAnalysis(EuropeanPut& an_option);
+
+/*
+ * Function: convergenceAnalysis
+ * -------------------------------
+ * Performs the solve function of the EuropeanPut
+ * object using a more refined space mesh width
+ * every time. Then computes the difference between
+ * the true solution and the computed solution
+ * at the final time step T, computes the inifinity
+ * norm of this difference and saves it on an
+ * output file named "file_name".
+ */
+void convergenceAnalysis(EuropeanPut& an_option,
+                         std::string file_name);
 
 int main(){
 
-    //case1();
-    case2();
+    case1();
+    //case2();
 
     return 0;
 }
 
 void case1(){
-    int Nx = 50; // Number of points in the x dimension.
-    int Nt = 500; // Number of time points.
-    int T = 5; // Finish time.
+    int Nx = 50;            // Number of points in the x dimension.
+    int Nt = 500;           // Number of time points.
+    int T = 5;              // Finish time.
 
     // Parameters of Black Scholes Equation.
-    double r = 0; // Interest rate
-    double sigma = 0.5; // Volatility
-    double K = 100; // Strike Price
-    double R = 3*K; // Artificial limit of asset price.
+    double r = 0;           // Interest rate
+    double sigma = 0.5;     // Volatility
+    double K = 100;         // Strike Price
+    double R = 3*K;         // Artificial limit of asset price.
 
+    // Instantiate object
     EuropeanPut option(Nx, Nt, r, sigma, T, K, R);
 
+    // Output file names
     std::string U_file_name = COMPLETE_PATH + "true_case1.dat";
     std::string Uh_file_name = COMPLETE_PATH + "computed_case1.dat";
     std::string grid_file_name = COMPLETE_PATH + "grid_case1.dat";
+    std::string errors_file_name = COMPLETE_PATH + "errors_case1.dat";
 
+    // Solve
     option.saveGrid(grid_file_name);
     option.computeTrueSolution(U_file_name);
     option.solveSemiImplicit(Uh_file_name);
 
-    // CONVERGENCE ANALYSIS
-    convergenceAnalysis(option);
+    // Convergence Analysis
+    convergenceAnalysis(option, errors_file_name);
 }
 
 void case2(){
-    int Nx = 50; // Number of points in the x dimension.
-    int Nt = 500; // Number of time points.
-    int T = 5; // Finish time.
+    int Nx = 50;            // Number of points in the x dimension.
+    int Nt = 500;           // Number of time points.
+    int T = 5;              // Finish time.
 
     // Parameters of Black Scholes Equation.
-    double r = 0.1; // Interest rate
-    double sigma = 0.1; // Volatility
-    double K = 100; // Strike Price
-    double R = 3*K; // Artificial limit of asset price.
+    double r = 0.1;         // Interest rate
+    double sigma = 0.1;     // Volatility
+    double K = 100;         // Strike Price
+    double R = 3*K;         // Artificial limit of asset price.
 
+    // Instantiate object
     EuropeanPut option(Nx, Nt, r, sigma, T, K, R);
 
+    // Output file names
     std::string U_file_name = COMPLETE_PATH + "true_case2.dat";
     std::string Uh_file_name = COMPLETE_PATH + "computed_case2.dat";
     std::string grid_file_name = COMPLETE_PATH + "grid_case2.dat";
+    std::string errors_file_name = COMPLETE_PATH + "errors_case2.dat";
 
+    // Solve
     option.saveGrid(grid_file_name);
     option.computeTrueSolution(U_file_name);
     option.solveSemiImplicit(Uh_file_name);
 
-    // CONVERGENCE ANALYSIS
-    convergenceAnalysis(option);
+    // Convergence Analysis
+    convergenceAnalysis(option, errors_file_name);
 }
 
-void convergenceAnalysis(EuropeanPut& an_option){
+void convergenceAnalysis(EuropeanPut& an_option,
+                         std::string file_name){
     double C = 4;
     double h = 0.5;
     std::ofstream this_file;
-    hlp.openOutputFile(COMPLETE_PATH+"errors.dat", this_file);
+    hlp.openOutputFile(file_name, this_file);
 
     std::cout << "" << std::endl;
     std::cout << "Errors for more refined step sizes h, and time steps delta_t,";
