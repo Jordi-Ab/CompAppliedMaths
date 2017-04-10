@@ -9,8 +9,18 @@ class ProjectedSOR
 {
 public:
 
+    // Constructor when given the complete Matrix.
     ProjectedSOR(const Matrix& B, const Vector& f,
                  const Vector& psi, double omega,
+                 const Vector& initial_x);
+
+    // Constructor when given the tridiagonal vectors.
+    ProjectedSOR(const Vector& low_diag,
+                 const Vector& diag,
+                 const Vector& upp_diag,
+                 const Vector& f,
+                 const Vector& psi,
+                 double omega,
                  const Vector& initial_x);
 
     ~ProjectedSOR();
@@ -22,37 +32,53 @@ public:
     // a failure in convergence.
     void setIterationsTolerance(int tol);
 
-    // Solves the system Ax = b, overwrites the given
-    // vector with the result.
-    void GsSolve(Vector& result);
-
-    void SorSolve(Vector& result);
+    void solvePSOR(Vector& result);
 
 private:
 
+    // Discretized Matrix of the system.
     Matrix* _B;
+
+    // Tridiagonal version of the Discretized
+    // Matrix. Stored using vectors
+    // for efficiency.
+    Vector* _low_diag; // Lower Diagonal
+    Vector* _main_diag; // Main Diagonal
+    Vector* _upp_diag; // Upper Diagonal
+
+    // Right Hand side vector of the system.
     Vector* _f;
 
-    Vector _psi;
+    // Vector of constraints.
+    Vector* _psi;
 
-    Vector* _last_x;
+    // Vector of initial guess.
+    Vector* _init_guess;
 
+    // Damping factor.
     double _omega;
 
     //Dimensions of the system.
     int _size;
 
-    // tolerated iterations before deciding
+    // Tolerated iterations before deciding
     // a failure in convergence.
     double _iter_tol = 500;
 
-    // desired error for the result.
+    // Desired error for the result.
     double _error_tol = 1e-8;
 
-    // Gauss Seidel step.
-    void gsStep(Vector& result);
+    // Perform one Iteration of SOR Algorithm
+    // using complete Matrix _B.
+    void makeStep(Vector& result);
 
-    bool hasConverged(Vector& x);
+    // Perform one Iteration of SOR Algorithm
+    // using tridiagonal vectors _low_diag,
+    // _main_diag, _upp_diag.
+    void makeStepTri(Vector& x);
+
+    // Test for Convergence.
+    bool hasConverged(Vector& previous, Vector& next);
 
 };
 

@@ -2,57 +2,159 @@
 #include "Matrix.hpp"
 #include "Vector.hpp"
 #include "ProjectedSOR.hpp"
+#include "Helpers.hpp"
 
-Vector createB(int size);
+static const std::string COMPLETE_PATH= "/Users/user/Documents/Maestria/Computational Applied Maths/CompAppliedMaths_git/Coursework2/P4/OutputData/";
+Helpers hlp;
+
+/*
+ *
+ * -------------------
+ * Function of constraints.
+*/
+double psi_f(double x);
+double rhs_f(double x);
+void vectorEvaluateF(double (*f) (double x),
+                     const Vector & xs,
+                     Vector& result);
+
+void solveEllipticInequality(double (*rhs_f) (double x),
+                             double (*psi_f) (double x),
+                             double l_BC, double r_BC,
+                             const Vector& mesh,
+                             Vector& result, bool save);
+
+void EllipticInequality();
+
+Vector unconstrainedTrueSol(const Vector& xvec);
 
 int main(){
-    int n = 15; // Size of the system.
-    int l = 1; // First entry of lower diagonal.
-    int u = 1; // First entry of upper diagonal.
-    int h = 2/(n + 1); // Mesh Size.
-    int m = -2*(1+2*(h*h));
 
-    double omega = 1.527893;
-
-    Matrix A2(n,n);
-    A2.tridiagonal(l,m,u);
-
-    //std::cout << "Matrix:" << std::endl;
-    //std::cout << A2 << std::endl;
-
-    Vector b = createB(n);
-    //std::cout << "b:" << std::endl;
-    //std::cout << b << std::endl;
-
-    Vector init_x(n);
-
-    Matrix A(4,4);
-    A(1,1) = 1; A(1,2) = 2; A(1,3) = 4; A(1,4) = 0;
-    A(2,1) = 0; A(2,2) = 1; A(2,3) = 0; A(2,4) = 2;
-    A(3,1) = 7; A(3,2) = 0; A(3,3) = 1; A(3,4) = 0;
-    A(4,1) = 4; A(4,2) = 2; A(4,3) = 5; A(4,4) = 0;
-
-    Vector x(n);
-
-    ProjectedSOR lin_solver(A2, b, omega, init_x);
-    lin_solver.SorSolve(x);
-    //lin_solver.GsSolve(x);
-
-    std::cout << "x:" << std::endl;
-    std::cout << x << std::endl;
+    EllipticInequality();
 
     return 0;
 }
 
-Vector createB(int size){
-    Vector b(size);
-    for(int entry=0; entry<size; entry++){
-        if (entry%2 == 0){
-            b[entry] = -1;
-        }else{
-            b[entry] = 0;
-        }
+void EllipticInequality(){
+
+    int Nx=16;
+    double l_BC = 0;   // Left Boundary Condition.
+    double r_BC = 0;    // Right Boundary Condition.
+
+    // A unifromly spaced mesh between 0 and 1 of Nx+1 points.
+    Vector mesh = hlp.linspace(0,1,Nx+1);
+
+    // Right hand side function:
+    double (*this_rhs) (double x);
+    this_rhs = &rhs_f;
+
+    // Function of constraints.
+    double (*this_psi) (double x);
+    this_psi = &psi_f;
+
+    // Algorithmic Implementation
+    Vector solution(Nx+1);
+    solveEllipticInequality(this_rhs, this_psi,
+                            l_BC, r_BC, mesh,
+                            solution, true);
+
+    Vector true_sol = unconstrainedTrueSol(mesh);
+    hlp.saveVectorToFile(true_sol, COMPLETE_PATH+"true.dat");
+
+}
+
+
+// Solve function that overwrites result with solution, and saves on file
+// depending on "save" flag
+void solveEllipticInequality(double (*rhs_f) (double x),
+                             double (*psi_f) (double x),
+                             double l_BC, double r_BC,
+                             const Vector& mesh,
+                             Vector& result, bool save){
+
+    int n = mesh.GetSize();
+
+    if(n<=2)
+        throw std::runtime_error("More than two mesh points should be given in order to compute a BVP.");
+
+    if(result.GetSize() != n)
+        throw std::runtime_error("Vector to save solution and mesh have differrent size.");
+    int inner_n = n-2;
+
+    // Assumes an equally spaced grid
+    double h = mesh.Read(1) - mesh.Read(0);
+
+    Vector diagonal(inner_n);
+    Vector off_diag(inner_n-1);
+    Vector rhs(inner_n);
+    Vector psi(inner_n); // Vector of constraints
+    Vector init_x(inner_n); // Initial guess
+
+    // Left Boundary condition on Right hand side
+    rhs[0] = rhs_f( mesh.Read(1) ) - l_BC/(h*h);
+
+    // Assemble inner tridiagonal "matrix"
+    // and inner right hand side.
+    for (int i = 0; i<inner_n-1; i++){
+        diagonal[i] = -2.0/(h*h);
+        off_diag[i] = 1.0/(h*h);
+        rhs[i+1] = rhs_f( mesh.Read(i+2) );
+        psi[i] = psi_f( mesh.Read(i+1) );
     }
-    return b;
+    // Right Boundary condition on Right hand side
+    rhs[inner_n-1] = rhs_f( mesh.Read(n-2) ) - r_BC/(h*h);
+
+    diagonal[inner_n-1] = -2.0/(h*h);
+    psi[inner_n-1] = psi_f( mesh.Read(n-2) );
+
+    double omega = 1.8; // Damping Factor
+
+    // Instantiate Projected SOR Solver.
+    ProjectedSOR solver(off_diag, diagonal, off_diag, rhs, psi, omega, init_x);
+
+    solver.solvePSOR(rhs);
+
+    // Assemble the complete solution
+    result[0] = l_BC;
+    for (int i = 1; i<=inner_n; i++){
+        result[i] = rhs[i-1];
+    }
+    result[n-1] = r_BC;
+
+    // save everything on files.
+    if(save){
+        hlp.saveVectorToFile(mesh, COMPLETE_PATH+"mesh.dat");
+        hlp.saveVectorToFile(result, COMPLETE_PATH+"computed.dat");
+    }
+}
+
+double psi_f(double x){
+    return 1 + x*0;
+}
+
+double rhs_f(double x){
+    return -50.0/3.0 + x*0;
+}
+
+void vectorEvaluateF(double (*f) (double x),
+                     const Vector & xs,
+                     Vector& result){
+
+    for (int i=0; i<xs.GetSize(); i++){
+        result[i] = f(xs.Read(i));
+    }
+}
+
+double unconstrainedTrueSol(double x){
+    return (25.0/3.0)*x - (25.0/3.0)*(x*x);
+}
+
+Vector unconstrainedTrueSol(const Vector& xvec){
+    int n = xvec.GetSize();
+    Vector result(n);
+    for (int i=0; i<n; i++){
+        result[i] = unconstrainedTrueSol(xvec.Read(i));
+    }
+    return result;
 }
 

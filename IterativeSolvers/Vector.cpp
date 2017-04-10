@@ -67,9 +67,8 @@ double& Vector::operator[](int i)
 // and a check on the validity of the index
 double Vector::Read(int i) const
 {
-    if (i==-1) return mData[mSize-1];
-    checkIndex(i, 0, mSize-1, "Read()");
-    return mData[i];
+   checkIndex(i, 0, mSize-1, "Read()");
+   return mData[i];
 }
 
 // Overloading round brackets
@@ -77,9 +76,8 @@ double Vector::Read(int i) const
 // and a check on the validity of the index
 double& Vector::operator()(int i)
 {
-    if (i==-1) return mData[mSize-1];
-    checkIndex(i, 0, mSize+1, "operator()");
-    return mData[i-1];
+   checkIndex(i, 0, mSize+1, "operator()");
+   return mData[i-1];
 }
 
 // Overloading the assignment operator

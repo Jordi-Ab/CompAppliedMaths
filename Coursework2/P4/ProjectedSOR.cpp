@@ -1,33 +1,75 @@
 #include "ProjectedSOR.hpp"
 
+// Constructor when given the complete Matrix.
 ProjectedSOR::ProjectedSOR(const Matrix& B, const Vector& f,
                            const Vector& psi, double omega,
                            const Vector& initial_x){
 
     // Assert Dimesions of given objects are correct.
-    if(B.GetNumberOfRows() != B.GetNumberOfCols()){
-        throw std::runtime_error("Error on Constructor, not a Square Matrix.");
+    if(B.GetNumberOfRows() != B.GetNumberOfColumns()){
+        throw std::runtime_error("Error on Constructor: Not a Square Matrix.");
     }else{
         _size = B.GetNumberOfRows();
     }if(f.GetSize() != _size ||
         psi.GetSize() != _size ||
         initial_x.GetSize() != _size){
-        throw std::runtime_error("Error on Constructor. Wrong dimension of vector.");
+        throw std::runtime_error("Error on Constructor: Wrong dimension of vector.");
     }
 
     _B = new Matrix(B);
+    _low_diag = NULL;
+    _main_diag = NULL;
+    _upp_diag = NULL;
+
     _f = new Vector(f);
     _psi = new Vector(psi);
-    _omega = omega;
-    _last_x = new Vector(initial_x);
+    _init_guess = new Vector(initial_x);
 
+    if(omega < 0 || omega > 2){
+        throw std::runtime_error("Error on Constructor: Invalid valid for Damping Factor Omega.");
+    }
+    _omega = omega;
+
+
+}
+
+// Constructor when given the tridiagonal vectors.
+ProjectedSOR::ProjectedSOR(const Vector& low_diag,
+                           const Vector& diag,
+                           const Vector& upp_diag,
+                           const Vector& f,
+                           const Vector& psi,
+                           double omega,
+                           const Vector& initial_x){
+
+    _size = diag.GetSize();
+    if(low_diag.GetSize() != _size - 1 ||
+        upp_diag.GetSize() != _size - 1 ||
+        f.GetSize() != _size ||
+        initial_x.GetSize() != _size){
+        throw std::runtime_error("Error on Constructor: Wrong dimension of vector.");
+    }
+
+    _B = NULL;
+    _low_diag = new Vector(low_diag);
+    _main_diag = new Vector(diag);
+    _upp_diag = new Vector(upp_diag);
+
+    _f = new Vector(f);
+    _init_guess = new Vector(initial_x);
+    _psi = new Vector(psi);
+
+    if(omega < 0 || omega > 2){
+        throw std::runtime_error("Error on Constructor: Invalid valid for Damping Factor Omega.");
+    }
+    _omega = omega;
 }
 
 ProjectedSOR::~ProjectedSOR(){
     delete _B;
     delete _f;
     delete _psi;
-    delete _last_x;
+    delete _init_guess;
 }
 
 // Sets the desired error for the result.
@@ -49,56 +91,86 @@ void ProjectedSOR::setIterationsTolerance(int tol){
     _iter_tol = tol;
 }
 
-void ProjectedSOR::solve(Vector& result){
+void ProjectedSOR::solvePSOR(Vector& result){
+
+    // Assert dimension is correct.
     if(result.GetSize() != _size)
         throw std::runtime_error("Dimensions error on solve function.");
 
     int iterations = 0;
+
+    Vector u0 = (*_init_guess); // Previous
+    result = (*_init_guess); // Next one.
+    bool converged = false;
     while (true){
-        // Gauss Seidel step. Overwrites result vector.
-        gsStep(result);
+
+        // Gauss Seidel Step with Damping factor.
+        // result gets modified.
+        if(_B != NULL) makeStep(result); // Whole matrix case
+        else makeStepTri(result); // Tridiagonal vectors case.
+
         iterations += 1;
-        Vector difference = result - (*_last_x);
-        if (difference.Norm(2) <= _error_tol){
-            std::cout << "SOR Method converged in ";
-            std::cout << iterations << " iterations." << std::endl;
+
+        // Check convergence
+        if (iterations >= _iter_tol){
+            // convergence failure.
+            result = *_init_guess;
             break;
-        }else if (iterations >= _iter_tol){
-            std::cout << "SOR Method failed to converge after ";
-            std::cout << iterations << " iterations." << std::endl;
+        }else if(hasConverged(u0, result)){
+            converged = true;
             break;
+        }else{
+            // Make another iteration.
+            u0 = result;
         }
-        // difference between result and last x represents the direction.
-        // THE PROJECT POINT IF VIOLATE CONSTRAINT SHOULD GO IN THE GS STEP?
-        (*_last_x) = (*_last_x) + difference*_omega; // Perform another iteration.
+    }
+
+    if(converged){
+        std::cout << "PSOR Method converged in ";
+        std::cout << iterations << " iterations." << std::endl;
+    }else{
+        std::cout << "PSOR Method failed to converge after ";
+        std::cout << iterations << " iterations." << std::endl;
     }
 }
 
-/*
-* Criterion to determine convergence of
-* a method. I don't use it because involves
-* a matrix vector multiplication, vector
-* susbtraction and then computing the norm
-* of that. */
-bool ProjectedSOR::hasConverged(Vector& x){
-    Vector residual = (*_B) * x - (*_f);
+bool ProjectedSOR::hasConverged(Vector& previous, Vector&next){
+    Vector residual = previous - next;
     double norm = residual.Norm(2);
     if(norm <= _error_tol) return true;
     return false;
 }
 
-void ProjectedSOR::gsStep(Vector& x){
-    for (int r=0; r<_size; r++){
-        x[r] = (*_f)[r];
-        for (int c=0; c<r; c++){
-            x[r] -= (*_B)(r+1,c+1)*x[c];
+void ProjectedSOR::makeStep(Vector& x){
+    for (int i=1; i<=_size; i++){
+        double y = 0.0;
+        // Sum values before diagonal
+        for (int j=1; j<=i-1; j++){
+            y += (*_B)(i,j) * x(j);
         }
-        for (int c=r+1; c<_size; c++){
-            x[r] -= (*_B)(r+1,c+1) * (*_last_x)[c];
+        // Sum values after diagonal
+        for (int j=i+1; j<=_size; j++){
+            y += (*_B)(i,j) * x(j);
         }
-        // Update solution
-        //double next_one = x[r] / (*_B)(r+1, r+1);
-        x[r] = x[r] / (*_B)(r+1, r+1);
-        x[r] = min( ( (*_psi)[r], x[r]);
+        y =  ( (*_f)(i) - y )/(*_B)(i,i);
+        // Project point if violates constraint.
+        x(i) = std::min( x(i) + _omega*( y - x(i) ), (*_psi)(i) );
+    }
+}
+
+void ProjectedSOR::makeStepTri(Vector& x){
+    for (int i=1; i<=_size; i++){
+        double y = 0.0;
+        // Sum values before diagonal (lower diagonal)
+        if(i != 1){
+            y += (*_low_diag)(i-1) * x(i-1);
+        }
+        // Sum values after diagonal (upper diagonal)
+        if(i !=_size){
+            y += (*_upp_diag)(i) * x(i+1);
+        }
+        y =  ( (*_f)(i) - y )/(*_main_diag)(i);
+        // Project point if violates constraint.
+        x(i) = std::min( x(i) + _omega*( y - x(i) ), (*_psi)(i) );
     }
 }

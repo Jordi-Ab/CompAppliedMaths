@@ -263,7 +263,8 @@ double true_sol2(double x){
 }
 
 double rhs_f1(double x){
-    return pow(M_PI, 2)*sin(M_PI*x);
+    //return pow(M_PI, 2)*sin(M_PI*x);
+    return -50.0/3.0;
 }
 
 double rhs_f2(double x){
