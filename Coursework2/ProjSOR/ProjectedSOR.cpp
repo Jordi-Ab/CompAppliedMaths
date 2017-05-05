@@ -1,5 +1,4 @@
 #include "ProjectedSOR.hpp"
-#include "Helpers.hpp"
 
 // Constructor when given the complete Matrix.
 ProjectedSOR::ProjectedSOR(const Matrix& B, const Vector& f,
@@ -92,13 +91,7 @@ void ProjectedSOR::setIterationsTolerance(int tol){
     _iter_tol = tol;
 }
 
-void ProjectedSOR::solvePSOR(Vector& result, std::string file_name){
-
-    // To save iterations
-    Helpers hlp;
-    std::ofstream out_file;
-    if (file_name != "")
-        hlp.openOutputFile(file_name, out_file);
+void ProjectedSOR::solvePSOR(Vector& result){
 
     // Assert dimension is correct.
     if(result.GetSize() != _size)
@@ -117,10 +110,6 @@ void ProjectedSOR::solvePSOR(Vector& result, std::string file_name){
         else makeStepTri(result); // Tridiagonal vectors case.
 
         iterations += 1;
-
-        // Save iteration on out file (just first 8)
-        if (file_name != "" && iterations <= 8)
-            hlp.saveData(iterations, result, out_file);
 
         // Check convergence
         if (iterations >= _iter_tol){
@@ -143,7 +132,6 @@ void ProjectedSOR::solvePSOR(Vector& result, std::string file_name){
         std::cout << "PSOR Method failed to converge after ";
         std::cout << iterations << " iterations." << std::endl;
     }
-    if(out_file.is_open()) hlp.closeOutputFile(out_file);
 }
 
 bool ProjectedSOR::hasConverged(Vector& previous, Vector&next){

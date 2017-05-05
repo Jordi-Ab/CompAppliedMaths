@@ -160,7 +160,6 @@ void Helpers::solveTridiagonal(const Vector& ld, const Vector& d, const Vector& 
     int n =d.GetSize();
     Vector delta(d);
     Vector f(rhs);
-
     // Elimination Stage.
     for (int i=1; i<n; i++){
         delta[i] = delta[i] - ud.Read(i-1)*ld.Read(i-1)/delta[i-1];
@@ -174,4 +173,3 @@ void Helpers::solveTridiagonal(const Vector& ld, const Vector& d, const Vector& 
     }
 
 }
-

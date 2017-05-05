@@ -8,34 +8,45 @@ static const std::string COMPLETE_PATH= "/Users/user/Documents/Maestria/Computat
 Helpers hlp;
 
 /*
- *
+ * Function: psi_f
  * -------------------
  * Function of constraints.
 */
 double psi_f(double x);
+
+/*
+ * Function: rhs_f
+ * -------------------
+ * Right hand side function of the system
+*/
 double rhs_f(double x);
+
+/*
+ * Function: vectorEvaluateF
+ * -------------------
+ * Evaluates the given function "f" at each
+ * point inside the vector "xs", stores the
+ * result on the vector "result".
+ * # Equivalent to a vector evaluation of
+ *   a function.
+*/
 void vectorEvaluateF(double (*f) (double x),
                      const Vector & xs,
                      Vector& result);
 
+// Solves the Elliptic Inequality problem using the
+// Projected SOR method.
 void solveEllipticInequality(double (*rhs_f) (double x),
                              double (*psi_f) (double x),
                              double l_BC, double r_BC,
                              const Vector& mesh,
                              Vector& result, bool save);
 
-void EllipticInequality();
-
+// unconstrained true solution of
+// the standard elliptic model
 Vector unconstrainedTrueSol(const Vector& xvec);
 
 int main(){
-
-    EllipticInequality();
-
-    return 0;
-}
-
-void EllipticInequality(){
 
     int Nx=16;
     double l_BC = 0;   // Left Boundary Condition.
@@ -59,10 +70,10 @@ void EllipticInequality(){
                             solution, true);
 
     Vector true_sol = unconstrainedTrueSol(mesh);
-    hlp.saveVectorToFile(true_sol, COMPLETE_PATH+"true.dat");
+    hlp.saveVectorToFile(true_sol, COMPLETE_PATH+"unconstrained_true.dat");
 
+    return 0;
 }
-
 
 // Solve function that overwrites result with solution, and saves on file
 // depending on "save" flag
@@ -112,7 +123,7 @@ void solveEllipticInequality(double (*rhs_f) (double x),
     // Instantiate Projected SOR Solver.
     ProjectedSOR solver(off_diag, diagonal, off_diag, rhs, psi, omega, init_x);
 
-    solver.solvePSOR(rhs);
+    solver.solvePSOR(rhs, COMPLETE_PATH+"iterations.dat");
 
     // Assemble the complete solution
     result[0] = l_BC;

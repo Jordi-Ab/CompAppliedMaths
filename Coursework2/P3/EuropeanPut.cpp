@@ -59,6 +59,61 @@ void EuropeanPut::solveFullyImplicit(std::string output_file_name,
     hlp.closeOutputFile(out_file);
 }
 
+void EuropeanPut::generalSolve(std::string output_file_name,
+                               bool compute_error){
+    std::ofstream out_file;
+    bool save = true;
+    if (compute_error) save=false;
+
+    if (save)
+        hlp.openOutputFile(output_file_name, out_file);
+
+    // Constants for discretizing.
+    double alpha = pow(_sigma, 2)*_dt;
+    double beta = _r*_dt;
+
+    // Outer values of discretized matrix,
+    // to be taken from solution:
+    double l_0 = -0.5*alpha;/*
+    First value of outer lower diagonal*/
+    double u_R = -( beta*(_Nx-1) + 0.5*alpha*(pow(_Nx-1,2.0) ));/*
+    Last value of outer upper diagonal*/
+
+    // Compute values for inner: lower diagonal, main diagonal,
+    // and upper diagonal.
+    semiImplicitDiscretize(alpha, beta);
+    Vector uh(_Nx-1); // Inner vector of states.
+
+    // Set first state as Initial Condition
+    for (int i=0; i<_Nx-1; i++){
+        double x = _s_grid->Read(i+1);
+        uh[i] = g(x);
+    }
+
+    // Advance forward in time
+    for(double t=0; t<=_T; t+=_dt){
+
+        double l_BC = f0(t+_dt);
+        double r_BC = fR(t+_dt);
+
+        uh[0] = uh[0] - l_0*l_BC;
+        uh[-1] = uh[-1] - u_R*r_BC;
+
+        // Solve the system (rhs gets overwritten)
+        hlp.solveTridiagonal(*_low_diag, *_main_diag, *_upp_diag, uh);
+
+        // Save solution in file including Boundary Conditions.
+        if(save) hlp.saveSolution(t, l_BC, uh, r_BC, out_file);
+    }
+
+    if(compute_error) computeError(uh);/*
+    Compute error with uh at the final time T.*/
+
+    if(save) hlp.closeOutputFile(out_file);
+
+
+}
+
 void EuropeanPut::solveSemiImplicit(std::string output_file_name,
                                     bool compute_error){
     std::ofstream out_file;
@@ -142,7 +197,17 @@ void EuropeanPut::semiImplicitDiscretize(double alpha, double beta){
 }
 
 void EuropeanPut::fullyImplicitDiscretize(double alpha, double beta){
-    throw std::runtime_error(" solveFullyImplicit not yet Implemented ");
+
+    _low_diag = new Vector(_Nx-2);
+    _main_diag = new Vector(_Nx-1);
+    _upp_diag = new Vector(_Nx-2);
+
+    for (int n=1; n<_Nx-1; n++){
+        (*_low_diag)[n-1] = 0.5*( beta*(n+1) - alpha*( pow(n+1,2.0) ) ); // Lower diagonal vector
+        (*_main_diag)[n-1] = 1 + beta + alpha*(n*n); // Main diagonal vector
+        (*_upp_diag)[n-1] = -0.5*( beta*n + alpha*(n*n) ); // Upper diagonal vector.
+    }
+    (*_main_diag)[-1] = 1 + beta + alpha*( pow(_Nx-1,2.0) );
 }
 
 void EuropeanPut::explicitDiscretize(double alpha, double beta){
@@ -166,11 +231,13 @@ void EuropeanPut::computeTrueSolution(std::string output_file_name){
 // Left Boundary Condition Function f0(t)
 double EuropeanPut::f0(double t){
     return _K*exp(-_r*t);
+    //return _K + 0*t;
 }
 
 // Right Boundary Condition Function fR(t)
 double EuropeanPut::fR(double t){
     return true_sol(t, _R);
+    //return 0*t;
 }
 
 // Initial Condition Function g(x)

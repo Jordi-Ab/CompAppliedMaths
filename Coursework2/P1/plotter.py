@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as pt
 
-case = 1
+case = 2
 
 mesh = np.loadtxt("OutputData/mesh.dat")
 us = np.loadtxt("OutputData/computed.dat")
@@ -13,7 +13,7 @@ fig1.subplots_adjust(hspace=.5)
 ax = fig1.add_subplot(1,1,1)
 ax.plot(mesh, us, 'ro', label = 'computed')
 ax.plot(mesh, true_us, 'b-', label = 'true')
-ax.set_title(r"Model Problem 1")
+ax.set_title("Case 1 \n Elliptic PDE")
 ax.legend(loc='upper left')
 ax.set_xlabel('x space')
 ax.set_ylabel('u(x) state')
@@ -26,7 +26,7 @@ ax2.loglog(h, (h*h), 'ko', lw=2, label = r'$O(h^2)$')
 ax2.legend(loc='upper left')
 ax2.set_xlabel('Step Size')
 ax2.set_ylabel('Error')
-ax2.set_title("Errors v.s. Step Size for Case "+str(case))
+ax2.set_title("Case 1("+"i"*case+") \n Errors v.s. Step Size")
 
 fig1.savefig("P1_Uh_vs_U.png")
 fig2.savefig("P1_errors_case"+str(case)+".png")

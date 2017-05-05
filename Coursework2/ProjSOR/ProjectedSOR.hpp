@@ -32,8 +32,7 @@ public:
     // a failure in convergence.
     void setIterationsTolerance(int tol);
 
-    void solvePSOR(Vector& result,
-                   std::string file_name = "");
+    void solvePSOR(Vector& result);
 
 private:
 

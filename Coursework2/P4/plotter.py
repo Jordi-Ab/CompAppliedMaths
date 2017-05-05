@@ -1,33 +1,45 @@
 import numpy as np
 import matplotlib.pyplot as pt
 
-case = 1
-
 mesh = np.loadtxt("OutputData/mesh.dat")
 us = np.loadtxt("OutputData/computed.dat")
-true_us = np.loadtxt("OutputData/true.dat")
-#h, err = np.loadtxt("OutputData/errors_case"+str(case)+".dat", unpack=True)
+true_us = np.loadtxt("OutputData/unconstrained_true.dat")
+array = np.loadtxt("OutputData/iterations.dat")
+
+iters = array[:, 0] # iteration number is in first column of iterations.dat file
+result = array[:,1:] # result are on columns: from 1 onwards, of file iterations.dat
+
+_map = {}
+
+for i in range(iters.size):
+    _iter = iters[i]
+    _map[_iter] = result[i] # Map iteration to its true solution.
+
+# First 8 iterations
+fig = pt.figure(figsize=(9,7))
+ax = fig.add_subplot(1,1,1)
+for k in range(1, 9):	
+	approx_sol = _map[k] # result at iteration k
+	to_plot = np.zeros(len(mesh))
+	to_plot[1:-1] = approx_sol # BC's are zero at end points
+	ax.plot(mesh, to_plot, label = "iteration"+str(k))
+ax.set_title("Case 4 \n Iterations of the Projected SOR method $(\omega = 1.8)$")
+ax.legend(loc='upper right', ncol=3)
+ax.set_xlabel('x Space')
+ax.set_ylabel('Approximate solution U(x)')
+ax.set_ylim(0,1.5)
+fig.savefig("P4_iterations.png")
+
 
 fig1 = pt.figure(figsize=(9,7))
 fig1.subplots_adjust(hspace=.5)
 ax = fig1.add_subplot(1,1,1)
-ax.plot(mesh, us, 'ro', label = 'computed')
-ax.plot(mesh, true_us, 'b-', label = 'true')
-ax.set_title(r"Model Problem 1")
-ax.legend(loc='upper left')
+ax.plot(mesh, us, 'r-', label = 'Constrained Approximation')
+ax.plot(mesh, true_us, 'b-', label = 'Unconstrained True')
+ax.set_title("Case 4 \n Converged Approximation v.s. Unconstrained Approximation")
+ax.legend(loc='lower center')
 ax.set_xlabel('x space')
 ax.set_ylabel('u(x) state')
+fig1.savefig("P4_constrained_vs_unconstrained.png")
 
-#fig2 = pt.figure(figsize=(9,7))
-#fig2.subplots_adjust(hspace=.5)
-#ax2 = fig2.add_subplot(1,1,1)
-#ax2.loglog(h,err,'b-', lw=2, label = r'$errors$')
-#ax2.loglog(h, (h*h), 'ko', lw=2, label = r'$O(h^2)$')
-#ax2.legend(loc='upper left')
-#ax2.set_xlabel('Step Size')
-#ax2.set_ylabel('Error')
-#ax2.set_title("Errors v.s. Step Size for Case "+str(case))
-
-fig1.savefig("P4_Uh_vs_U.png")
-#fig2.savefig("P1_errors_case"+str(case)+".png")
 pt.show()

@@ -5,8 +5,7 @@
 #include "Vector.hpp"
 #include <stdexcept>
 
-class ProjectedSOR
-{
+class ProjectedSOR{
 public:
 
     // Constructor when given the complete Matrix.
@@ -23,6 +22,7 @@ public:
                  double omega,
                  const Vector& initial_x);
 
+    // Destructor
     ~ProjectedSOR();
 
     // Sets the desired error for the result.
@@ -32,8 +32,8 @@ public:
     // a failure in convergence.
     void setIterationsTolerance(int tol);
 
-    void solvePSOR(Vector& result,
-                   std::string file_name = "");
+    // Solve the inequality problem
+    void solve(Vector& result);
 
 private:
 
